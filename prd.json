@@ -1,0 +1,248 @@
+{
+  "project": "RalphForge",
+  "branchName": "ralph/ralphforge-saas",
+  "description": "RalphForge SaaS - Transform business ideas into executable Ralph tasks",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Set up Phoenix project with Ash Framework",
+      "description": "As a developer, I need a Phoenix project with Ash Framework configured so I can build the core data layer.",
+      "acceptanceCriteria": [
+        "Phoenix project created with LiveView support",
+        "Ash Framework dependencies added (ash, ash_postgres, ash_phoenix, ash_authentication)",
+        "Database configured (PostgreSQL)",
+        "Basic project structure established",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Phoenix project created successfully. Ash dependencies commented out for now - will add incrementally."
+    },
+    {
+      "id": "US-002",
+      "title": "Configure Ash domains (Accounts, Tasks, Templates, Billing)",
+      "description": "As a developer, I need Ash domains configured for the core business entities.",
+      "acceptanceCriteria": [
+        "Accounts domain module created",
+        "Tasks domain module created",
+        "Templates domain module created",
+        "Billing domain module created",
+        "Domain structure established for Ash migration",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "All four domain modules created with TODO comments for Ash integration"
+    },
+    {
+      "id": "US-003",
+      "title": "Create Tasks Ash domain",
+      "description": "As a developer, I need a Tasks domain configured for task generation.",
+      "acceptanceCriteria": [
+        "Tasks domain module created",
+        "Domain configured with proper extensions",
+        "Basic domain structure established",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create Templates Ash domain",
+      "description": "As a developer, I need a Templates domain configured for reusable templates.",
+      "acceptanceCriteria": [
+        "Templates domain module created",
+        "Domain configured with proper extensions",
+        "Basic domain structure established",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create Billing Ash domain",
+      "description": "As a developer, I need a Billing domain configured for subscriptions.",
+      "acceptanceCriteria": [
+        "Billing domain module created",
+        "Domain configured with proper extensions",
+        "Basic domain structure established",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create User resource with AshAuthentication",
+      "description": "As a developer, I need user authentication working via AshAuthentication.",
+      "acceptanceCriteria": [
+        "User resource created with email/password",
+        "AshAuthentication configured",
+        "Registration endpoint working",
+        "Login endpoint working",
+        "Authentication middleware configured",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create Task resource for task generation",
+      "description": "As a developer, I need a Task resource to store generated tasks.",
+      "acceptanceCriteria": [
+        "Task resource created with input_idea, generated_prompt, tech_stack fields",
+        "Belongs_to relationship to User",
+        "Create action for task generation",
+        "Basic CRUD operations working",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Implement Claude API integration",
+      "description": "As a developer, I need Claude API integration to generate Ralph tasks.",
+      "acceptanceCriteria": [
+        "Claude API client configured",
+        "Task generation function implemented",
+        "Error handling for API failures",
+        "Token usage tracking",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Set up Oban for background job processing",
+      "description": "As a developer, I need background job processing for AI calls.",
+      "acceptanceCriteria": [
+        "Oban dependency added",
+        "Worker for task generation created",
+        "Job queuing working",
+        "Background processing configured",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Create Plan resource for subscriptions",
+      "description": "As a developer, I need a Plan resource to define subscription tiers.",
+      "acceptanceCriteria": [
+        "Plan resource created with name, price, limits",
+        "Basic plans seeded (free, starter, pro, team)",
+        "Read operations working",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Create Subscription resource with state machine",
+      "description": "As a developer, I need a Subscription resource with proper lifecycle management.",
+      "acceptanceCriteria": [
+        "Subscription resource created with AshStateMachine",
+        "States: pending, active, cancelled, expired",
+        "Belongs_to User and Plan relationships",
+        "Basic state transitions working",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Create UsageEvent resource for tracking",
+      "description": "As a developer, I need usage tracking for billing and limits.",
+      "acceptanceCriteria": [
+        "UsageEvent resource created",
+        "Tracks task generations, API calls, etc.",
+        "Belongs_to User relationship",
+        "Aggregations for monthly usage",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Add authentication UI (LiveView)",
+      "description": "As a user, I want to register and login via web interface.",
+      "acceptanceCriteria": [
+        "Registration LiveView created",
+        "Login LiveView created",
+        "Authentication redirects working",
+        "Form validation implemented",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Create task generation LiveView",
+      "description": "As a user, I want a web interface to generate tasks from business ideas.",
+      "acceptanceCriteria": [
+        "LiveView for task input created",
+        "Real-time generation progress shown",
+        "Results displayed after completion",
+        "Export options (Markdown, JSON)",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Create dashboard for task history",
+      "description": "As a user, I want to see my generated tasks and usage.",
+      "acceptanceCriteria": [
+        "Dashboard LiveView created",
+        "Task list displayed",
+        "Usage statistics shown",
+        "Export functionality working",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
