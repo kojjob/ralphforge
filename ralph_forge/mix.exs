@@ -48,6 +48,7 @@ defmodule RalphForge.MixProject do
       {:ecto_sql, "~> 3.13"},
       {:postgrex, ">= 0.0.0"},
       {:bcrypt_elixir, "~> 3.1"},
+      {:req, "~> 0.5"},
       {:jason, "~> 1.2"},
       {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
