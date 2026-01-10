@@ -40,40 +40,14 @@ defmodule RalphForge.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      # Phoenix Core
       {:phoenix, "~> 1.8.3"},
       {:phoenix_ecto, "~> 4.5"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.1.0"},
-
-      # Ash Framework (Will add after basic setup)
-      # {:ash, "~> 2.15"},
-      # {:ash_postgres, "~> 1.3"},
-      # {:ash_phoenix, "~> 1.2"},
-      # {:ash_authentication, "~> 3.12"},
-      # {:ash_authentication_phoenix, "~> 1.9"},
-      # {:ash_admin, "~> 0.11"},
-      # {:ash_oban, "~> 0.2"},
-
-      # Database
       {:ecto_sql, "~> 3.13"},
       {:postgrex, ">= 0.0.0"},
-
-      # Background Jobs (Will add after basic setup)
-      # {:oban, "~> 2.17"},
-
-      # HTTP & API (for Claude - will add after basic setup)
-      # {:req, "~> 0.4"},
       {:jason, "~> 1.2"},
-
-      # Payments (Will add after basic setup)
-      # {:stripity_stripe, "~> 3.2"},
-
-      # Auth (Will add after basic setup)
-      # {:bcrypt_elixir, "~> 3.1"},
-
-      # Assets
       {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
       {:heroicons,
@@ -83,19 +57,13 @@ defmodule RalphForge.MixProject do
        app: false,
        compile: false,
        depth: 1},
-
-      # Telemetry
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
-
-      # Dev & Test
       {:lazy_html, ">= 0.1.0", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_machina, "~> 2.8", only: :test},
       {:mox, "~> 1.1", only: :test},
-
-      # Runtime
       {:gettext, "~> 1.0"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"}
