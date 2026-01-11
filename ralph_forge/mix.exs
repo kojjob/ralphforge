@@ -40,18 +40,44 @@ defmodule RalphForge.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # Phoenix Core
       {:phoenix, "~> 1.8.3"},
       {:phoenix_ecto, "~> 4.5"},
       {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
+      {:phoenix_live_reload, "~> 1.5", only: :dev},
       {:phoenix_live_view, "~> 1.1.0"},
+      {:phoenix_live_dashboard, "~> 0.8.4"},
+
+      # Ash Framework
+      {:ash, "~> 3.0"},
+      {:ash_postgres, "~> 2.0"},
+      {:ash_phoenix, "~> 2.0"},
+      {:ash_authentication, "~> 4.0"},
+      {:ash_authentication_phoenix, "~> 2.0"},
+      {:ash_admin, "~> 0.11"},
+      {:ash_oban, "~> 0.2"},
+      {:simple_sat, "~> 0.1"},
+
+      # Database
       {:ecto_sql, "~> 3.13"},
       {:postgrex, ">= 0.0.0"},
-      {:bcrypt_elixir, "~> 3.1"},
+
+      # Background Jobs
+      {:oban, "~> 2.18"},
+
+      # HTTP & API
       {:req, "~> 0.5"},
       {:jason, "~> 1.2"},
-      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
+
+      # Payments
+      {:stripity_stripe, "~> 3.2"},
+
+      # Auth
+      {:bcrypt_elixir, "~> 3.1"},
+
+      # Assets
       {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
+      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.2.0",
@@ -59,13 +85,20 @@ defmodule RalphForge.MixProject do
        app: false,
        compile: false,
        depth: 1},
+
+      # Telemetry
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
+
+      # Dev & Test
       {:lazy_html, ">= 0.1.0", only: :test},
+      {:floki, ">= 0.36.0", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_machina, "~> 2.8", only: :test},
       {:mox, "~> 1.1", only: :test},
+
+      # Runtime
       {:gettext, "~> 1.0"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"}

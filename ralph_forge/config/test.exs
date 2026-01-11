@@ -33,3 +33,12 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# Speed up bcrypt hashing for tests (never use in production).
+config :bcrypt_elixir, log_rounds: 1
+
+# Configure Oban for testing - use inline mode for synchronous execution
+config :ralph_forge, Oban, testing: :inline
+
+# Use Mox mock for Claude API in tests
+config :ralph_forge, :claude_client, RalphForge.AI.ClaudeMock

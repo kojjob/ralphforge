@@ -9,7 +9,8 @@ import Config
 
 config :ralph_forge,
   ecto_repos: [RalphForge.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  ash_domains: [RalphForge.Accounts, RalphForge.Tasks]
 
 # Configure the endpoint
 config :ralph_forge, RalphForgeWeb.Endpoint,
@@ -50,6 +51,13 @@ config :logger, :default_formatter,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+# Configure Oban for background job processing
+config :ralph_forge, Oban,
+  repo: RalphForge.Repo,
+  queues: [default: 10, task_generation: 10],
+  plugins: [Oban.Plugins.Pruner],
+  crontab: false
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
