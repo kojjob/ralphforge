@@ -1,408 +1,436 @@
-# SPEC.md — Ralph Runner (Production Technical Specification)
-
-## 0. Overview
-This SPEC defines the architecture, data model, state machines, integrations, and repo-execution design for Ralph Runner.
-
-Core design choice (v1): **Rails control plane + GitHub Actions execution**.
-- Rails: UI, policies, plan/task management, audit log, run registry.
-- GitHub Actions: executes Ralph Loop within the repo, produces PRs, posts status.
+# SPEC.md — RalphForge SaaS (Phoenix + Ash)
+Version: 1.0
+This spec defines architecture, Ash resources, policies, workflows, and test strategy.
+It is written to be production-ready and compatible with Elixir 1.19 / Phoenix 1.8 / Ash 3.
 
 ---
 
-## 1. System Architecture
+## 1) Architecture Overview
 
 ### 1.1 Components
-1) **Web App (Rails 8)**
-- Hotwire/Turbo + Tailwind UI
-- Postgres persistence
-- Solid Queue jobs for background work:
-  - webhook processing
-  - plan generation dispatch
-  - run dispatch
-  - sync repo metadata
+- Phoenix 1.8 + LiveView UI
+- Ash domains + AshPostgres for resources and data access
+- AshAuthentication + AshAuthenticationPhoenix for auth
+- Ash policies for authorization and usage limits
+- Oban for background jobs (generation, webhook processing)
+- Req for Claude API
+- Stripity Stripe for billing and webhook handling
+- Tailwind for styling
+- AshAdmin for admin UI
 
-2) **GitHub Integration**
-- GitHub App installation model (preferred)
-- Webhooks ingested by Rails (`/webhooks/github`)
-- GitHub API calls (Octokit):
-  - list repos for installation
-  - create workflow dispatch
-  - create PR (optional; usually action does it)
-  - create revert PR
-  - fetch PR metadata/status
-
-3) **Execution Engine (GitHub Actions)**
-- Workflows stored in repo under `.github/workflows/`:
-  - `ralph_plan.yml`
-  - `ralph_build.yml`
-  - `ralph_revert.yml` (optional; revert can be API-only)
-- Actions runner:
-  - checks out repo
-  - ensures `/ralph` exists (bootstrap step if needed)
-  - runs `ralph/bin/loop.sh` in bounded mode
-  - runs `ralph/bin/run_checks.sh` fast/full as directed
-  - commits to branch `ralph/run-<run_id>`
-  - opens PR
-  - uploads logs/artifacts (optional)
-  - sends status back (via GitHub status + webhook to Rails)
-
-### 1.2 Why Actions (v1)
-- Zero local setup for non-technical users.
-- No need to run untrusted code on our servers.
-- Scales with GitHub infrastructure and user trust.
+### 1.2 Boundary Rules (DDD)
+- Web layer (LiveViews/Controllers) must call **Domain APIs** only (Ash actions / domain modules).
+- External integrations must be behind adapters:
+  - `RalphForge.AI.Claude` (HTTP calls)
+  - `RalphForge.Billing.Stripe` (checkout + webhooks)
+- Background jobs orchestrate work but do not contain business rules that belong in Ash resources/policies.
 
 ---
 
-## 2. Repository “Ralph Folder” Contract
+## 2) Domains & Resources (Ash)
 
-### 2.1 Required files
-Repo must have:
-- `ralph/SPECS/*` — markdown specs
-- `ralph/IMPLEMENTATION_PLAN.md`
-- `ralph/AGENTS.md`
-- `ralph/PROMPT_plan.md`
-- `ralph/PROMPT_build.md`
-- `ralph/bin/loop.sh`
-- `ralph/bin/run_checks.sh`
+### 2.1 Accounts Domain (`RalphForge.Accounts`)
+Resources:
+- `RalphForge.Accounts.User`
+- (optional) `RalphForge.Accounts.Token` (if needed; AshAuth can manage tokens)
 
-Optional:
-- `ralph/ralph.config.json` (polyglot modules)
-- `ralph/deps.contracts.json` (contract fan-out rules)
-- `ralph/RALPH_DONE`, `ralph/RALPH_FATAL`, `ralph/RALPH_PAUSE` (stop signals)
+#### User attributes
+- `id` (uuid primary key)
+- `email` (string, required, unique)
+- `hashed_password` (managed by AshAuth)
+- `role` (atom: :user | :admin) default :user
+- `inserted_at`, `updated_at`
 
-### 2.2 Bootstrap
-If missing, Rails can open a PR that adds the standard `ralph/` template (recommended onboarding path):
-- “Enable Ralph Runner” button → creates PR adding folder + workflows.
+#### User actions
+- `create :register_with_password` (AshAuth)
+- `read :by_id`
+- `read :by_email`
+- `update :make_admin` (admin-only)
+- `destroy :delete` (admin-only)
 
----
-
-## 3. Ralph Loop Execution Contract
-
-### 3.1 Modes
-- `plan`: update `IMPLEMENTATION_PLAN.md` only, no code changes
-- `build`: implement exactly one task, update plan, run checks, commit, exit
-- `refactor` (optional): non-functional improvements only
-
-### 3.2 “One task per iteration” rule
-Build mode MUST:
-- select single next unblocked task
-- implement it
-- add/adjust tests
-- run validation
-- update plan
-- commit
-- exit
-
-### 3.3 Validation rules
-- Fast checks always for affected modules
-- Full checks:
-  - on schedule (every N runs) OR
-  - when contract files changed OR
-  - when policy demands (high risk)
-
-### 3.4 Fail-streak breaker
-If checks fail repeatedly:
-- write `ralph/RALPH_FATAL` (or `RALPH_PAUSE`)
-- stop workflow
-- Rails UI shows “needs decision” and prompts user with choices.
+#### Policies
+- Users can read/update themselves
+- Admins can read all
+- Only admins can access admin panel routes
 
 ---
 
-## 4. GitHub App Spec
+### 2.2 Templates Domain (`RalphForge.Templates`)
+Resource: `RalphForge.Templates.Template`
 
-### 4.1 Permissions (minimum viable)
-- Repository contents: read/write (for branches and commits)
-- Pull requests: read/write
-- Actions: read (and workflow dispatch if needed via API)
-- Checks/Statuses: read
+Attributes:
+- `id` uuid
+- `name` string required unique
+- `description` string
+- `category` atom (:saas, :mobile, :api, :cli, :phoenix)
+- `content` text required (prompt template body)
+- `is_premium` boolean default false
+- timestamps
 
-### 4.2 Webhooks
-Subscribe to:
-- `installation`, `installation_repositories`
-- `pull_request`
-- `workflow_run` (or `check_suite`)
-- `push` (optional)
-- `repository` (rename/delete)
+Actions:
+- `read :list` (public for logged-in users)
+- `create/update/destroy` (admin-only)
+- `read :by_category`
 
-### 4.3 Webhook verification
-- Verify `X-Hub-Signature-256` using the app’s webhook secret.
-- Reject invalid signatures with 401.
+Seed:
+- Create seed module to insert default templates on dev/prod boot (or mix task).
 
-### 4.4 Token handling
-- Store installation IDs and use GitHub App JWT → installation token exchange.
-- Encrypt any stored tokens (ideally store none; fetch tokens on demand).
-
----
-
-## 5. Workflows (GitHub Actions)
-
-### 5.1 `ralph_build.yml` (high level)
-Inputs:
-- `run_id`
-- `task_id`
-- `mode=build`
-- `policy_json` (snapshot)
-Steps:
-1) Checkout repo
-2) Ensure `ralph/` exists (fail with guidance if missing)
-3) Apply policy guardrails:
-   - block changes to locked paths
-   - enforce max iterations
-4) Run one iteration:
-   - `ralph/bin/loop.sh build 1`
-5) Run checks:
-   - `ralph/bin/run_checks.sh fast`
-   - optionally `full`
-6) Create branch `ralph/run-<run_id>`
-7) Commit changes
-8) Create PR (title includes task + run id)
-9) Output PR URL (as artifact/log)
-
-### 5.2 `ralph_plan.yml`
-Inputs:
-- `project_id` / `run_id`
-Steps:
-- Run plan mode once (or bounded)
-- Commit only plan changes to PR OR write plan output artifact for Rails to ingest
-
-Recommended: create PR for plan updates too (transparent & auditable).
-
-### 5.3 `ralph_revert.yml` (optional)
-Inputs:
-- `pr_number` or `merge_commit_sha`
-Steps:
-- create revert branch
-- open revert PR
-
-Alternative: Rails can call GitHub API to create revert PR.
+Policies:
+- All authenticated users can read templates
+- Premium templates only readable if subscription >= Starter (optional toggle)
 
 ---
 
-## 6. Rails Domain Model (Suggested)
+### 2.3 Tasks Domain (`RalphForge.Tasks`)
+Resources:
+- `RalphForge.Tasks.Task` (primary)
+- `RalphForge.Tasks.Generation` (progress tracking)
 
-### 6.1 Tables (core)
-- `users`
-- `github_installations`
-  - installation_id (unique)
-  - account_login
-  - account_type (User/Org)
-  - metadata JSON
-- `projects`
-  - user_id (owner)
-  - github_installation_id
-  - repo_full_name
-  - default_branch
-  - status (enum)
-- `spec_versions`
-  - project_id
-  - content (text)
-  - source (ui/upload)
-- `plans`
-  - project_id
-  - version
-  - raw_markdown
-  - parsed_json (tasks snapshot)
-- `tasks`
-  - project_id
-  - plan_id
+#### Task attributes
+- `id` uuid
+- `input_idea` string required
+- `status` atom (:pending, :generating, :completed, :failed) default :pending
+- `generated_markdown` text (final output)
+- `generated_json` map (structured output for export)
+- `tokens_used` integer
+- `error_message` string (for failed)
+- relationships:
+  - `belongs_to :user` (required)
+  - `belongs_to :template` (optional)
+  - `has_many :generations`
+
+#### Task actions
+- `create :create` (authenticated; subject to usage policy)
+- `read :list_for_user` (filter by actor)
+- `read :get` (actor owns or admin)
+- `update :mark_generating`
+- `update :complete`
+- `update :fail`
+- `action :enqueue_generation` (custom) → enqueues Oban job
+
+#### Generation attributes
+- `id` uuid
+- `task_id` uuid required
+- `stage` atom (:queued, :preparing, :calling_ai, :parsing, :saving, :completed, :failed)
+- `progress` integer 0..100
+- `message` string
+- `partial_markdown` text (optional)
+- timestamps
+
+Generation actions:
+- `create :start_for_task`
+- `update :progress`
+- `update :finish`
+- `update :fail`
+
+Policies:
+- Actor must own task/generation, or be admin.
+
+---
+
+### 2.4 Billing Domain (`RalphForge.Billing`)
+Resources:
+- `RalphForge.Billing.Plan` (static rows)
+- `RalphForge.Billing.Subscription`
+- `RalphForge.Billing.UsageEvent`
+
+#### Plan attributes
+- `id` uuid
+- `code` atom (:free, :starter, :pro, :team) unique
+- `name` string
+- `price_cents` integer
+- `tasks_per_month` integer
+- `stripe_price_id` string (env-backed; store copy for reference)
+- timestamps
+
+#### Subscription attributes
+- `id` uuid
+- `user_id` uuid required
+- `plan_code` atom
+- `stripe_customer_id` string
+- `stripe_subscription_id` string
+- `status` atom (:pending, :active, :canceled, :past_due, :incomplete, :expired)
+- `current_period_start` utc_datetime
+- `current_period_end` utc_datetime
+- timestamps
+
+Actions:
+- `read :current_for_user`
+- `create :from_checkout` (webhook-driven)
+- `update :sync_from_stripe` (webhook-driven)
+- `update :cancel`
+
+#### UsageEvent attributes
+- `id` uuid
+- `user_id` uuid required
+- `task_id` uuid optional
+- `event_type` atom (:task_generated)
+- `occurred_at` utc_datetime required
+- `month_key` string (e.g., "2026-01")
+- timestamps
+
+Actions:
+- `create :record_task_generated`
+- `read :count_for_user_month` (aggregate)
+
+Policies:
+- Users can read their own subscription and usage
+- Admin can read all
+
+---
+
+## 3) Usage Limits & Enforcement (Ash Policies)
+
+### 3.1 Entitlement Resolution
+Compute effective plan:
+- If user has active subscription => that plan
+- Else => :free
+
+### 3.2 Monthly Usage
+Define month_key as UTC year-month, e.g. `Timex.format!(Date.utc_today(), "{YYYY}-{0M}")`
+(or `Calendar.strftime` equivalents; keep deps minimal.)
+
+### 3.3 Enforcement Policy (recommended)
+Enforce at Task creation:
+- deny `Task.create` if user has exceeded `tasks_per_month` for current month_key.
+
+Implementation options:
+- Policy check using `Ash.Policy.SimpleCheck` + query aggregate
+- Or custom `Ash.Policy.Check` module that:
+  - resolves plan
+  - queries usage count for month
+  - compares to limit
+
+Count usage on completion:
+- Create `UsageEvent` when generation completes successfully.
+
+Note: If you want to count attempts, record on enqueue instead.
+
+---
+
+## 4) AI Integration — Claude (Req)
+
+### 4.1 Module
+`RalphForge.AI.Claude`
+
+Responsibilities:
+- Build prompt from:
+  - user idea
+  - selected template content
+  - system constraints (output format)
+- Call Claude API via Req
+- Support:
+  - non-streaming response (v1)
+  - optional streaming (v1.1)
+- Return structured result:
+  - markdown output
+  - extracted JSON (if included)
+  - token usage estimate if available
+
+### 4.2 Prompt Contract (Output)
+Claude must output:
+1) A Markdown “Ralph task” (primary)
+2) A JSON block for structured export (secondary)
+
+Example (spec):
+- Markdown contains: goal, assumptions, milestones, steps, acceptance criteria
+- JSON contains fields like:
   - title
-  - description
-  - impact (enum)
-  - risk (enum)
-  - status (enum: idea/planned/in_progress/done)
-  - acceptance_json
-  - modules_json
-  - order_index
-  - depends_on_task_ids (json)
-- `runs`
-  - project_id
-  - task_id (nullable for plan runs)
-  - status (enum)
-  - github_workflow_run_id (nullable)
-  - pr_number (nullable)
-  - pr_url (nullable)
-  - logs_url (nullable)
-  - policy_snapshot_json
-  - started_at / finished_at
-- `policies`
-  - project_id
-  - pr_only (bool)
-  - locked_paths_json
-  - require_approval_high_risk (bool)
-  - max_runs_per_day
-  - max_iterations_per_run
-  - full_checks_every
-  - daily_budget_cents (optional)
-- `approvals`
-  - run_id
-  - reviewer_user_id
-  - status (approved/denied)
-  - note
-- `audit_events`
-  - actor_id
-  - project_id
-  - event_type
-  - payload_json
+  - summary
+  - milestones[]
+  - tasks[] with id, title, description, done_when[]
+  - tech_stack
 
-### 6.2 Enums
-- Project status: `stable`, `needs_attention`, `blocked`
-- Run status: `queued`, `running`, `succeeded`, `needs_approval`, `failed`, `blocked`, `paused`
-- Risk: `low`, `medium`, `high`
-- Impact: `low`, `medium`, `high`
+### 4.3 Error Handling
+- 429 / 5xx => retry with exponential backoff in Oban (max attempts)
+- 4xx => fail task with clear message
+- Always redact keys and sensitive data from logs
+
+### 4.4 Testing
+Use Mox:
+- Define behaviour `RalphForge.AI.Provider`
+- `Claude` implements it
+- Tests inject `ClaudeMock`
 
 ---
 
-## 7. State Machines
+## 5) Background Jobs (Oban)
 
-### 7.1 Task state machine
-`idea → planned → in_progress → done`
-Transitions:
-- planned → in_progress when a run is started
-- in_progress → done when a run succeeded & PR merged (optional) OR when user marks done
-Recommendation: track “implemented” separate from “merged” for clarity:
-- `implemented` when PR created
-- `shipped` when merged
+### 5.1 Workers
+- `RalphForge.Tasks.Workers.GenerateWorker`
+  - args: %{task_id: uuid}
+  - steps:
+    1) mark task generating
+    2) create generation record stage queued → preparing
+    3) call Claude, update progress stages
+    4) parse output to markdown/json
+    5) update task complete + record usage event
+    6) broadcast progress to LiveView
 
-### 7.2 Run state machine
-`queued → running → (succeeded | needs_approval | failed | blocked | paused)`
-Rules:
-- `needs_approval` if:
-  - task risk=high AND policy requires approval
-  - OR locked-path touched attempt detected
-- `blocked` if missing env/secrets or guardrail violation
-- `paused` if fail-streak breaker triggers and user input is required
+- `RalphForge.Billing.Workers.StripeWebhookWorker` (optional)
+  - args include event id/payload
+  - idempotency key: stripe event id
 
----
+### 5.2 Progress Broadcasting
+Use Phoenix PubSub:
+- Topic: `"task_generation:#{task_id}"`
+- LiveView subscribes and receives:
+  - stage updates
+  - progress percentage
+  - partial output (optional)
 
-## 8. Policies & Enforcement
-
-### 8.1 Pre-dispatch enforcement (Rails)
-Before dispatching build:
-- if daily run limit reached → block
-- if budget exceeded → block
-- if task risk high and approvals required:
-  - either require approval before run OR allow run but require approval before merge (choose one policy)
-Recommended v1: require approval before merge; allow run to create PR but label as “approval required”.
-
-### 8.2 In-run enforcement (Actions)
-- Compute diff vs base branch after changes.
-- If any file matches locked paths → fail run, mark status blocked, do not open PR OR open PR labeled “blocked” (configurable).
-Recommended: fail and do not open PR to avoid leaking sensitive diffs.
+### 5.3 Idempotency
+GenerateWorker should be idempotent:
+- If task already completed => no-op
+- If generating but has generation record => resume or fail safely
 
 ---
 
-## 9. Plan & Task Generation (LLM)
+## 6) Web Layer (Phoenix/LiveView)
 
-### 9.1 Inputs
-- Latest Specs
-- Repo structure (file list; optionally key files)
-- Existing plan/task history
-- Policies (risk constraints)
+### 6.1 Routes
+- `/` HomeLive
+- `/register` AuthLive.Register
+- `/login` AuthLive.Login
+- `/logout` (AshAuth route helper)
+- `/dashboard` DashboardLive (authenticated)
+- `/tasks` TaskLive.Index (authenticated)
+- `/tasks/new` TaskLive.New (authenticated)
+- `/tasks/:id` TaskLive.Show (authenticated)
+- `/billing/plans` BillingLive.Plans
+- `/billing/success` BillingLive.Success
+- `/stripe/webhook` WebhookController (POST)
+- `/admin` AshAdmin (admin-only)
 
-### 9.2 Output requirements
-- Tasks must be “one-iteration sized”
-- Each task includes:
-  - acceptance checklist
-  - validation expectations (fast/full)
-  - modules likely touched
-  - dependencies
+### 6.2 LiveView Behaviors
+TaskLive.New:
+- form input idea + template selection
+- on submit:
+  - create Task
+  - enqueue generation
+  - show progress component
+  - subscribe to PubSub topic
+- on completion:
+  - redirect to show page or render results inline
 
-### 9.3 Storage
-- Store plan markdown + parsed JSON representation
-- Keep older plan versions for audit and rollback
+TaskLive.Show:
+- syntax-highlighted markdown (client-side)
+- export buttons (routes or endpoints)
+- copy button (JS hook)
 
----
+TaskLive.Index:
+- list tasks for current user (keyset pagination)
+- filters: status/date/template (optional)
 
-## 10. UX Technical Notes
+### 6.3 Syntax Highlighting
+Options:
+- Use client-side highlight.js for fenced code blocks
+- Or render with a markdown renderer and decorate blocks
+Keep it simple: highlight.js + Tailwind prose styles.
 
-### 10.1 “Plain English” summaries
-Generate PR summaries from:
-- git diff stats + changed paths
-- task acceptance checklist
-- run logs (structured)
-Output:
-- What changed
-- Why
-- How to verify
-- Risk
-
-### 10.2 Logs & artifacts
-- For each run:
-  - store GitHub workflow run URL
-  - optionally store artifact links (zipped logs)
-- Rails displays “technical logs” behind a disclosure panel.
-
----
-
-## 11. Security Requirements
-- Webhook signature verification required.
-- Encrypt sensitive fields at rest (Rails Active Record Encryption).
-- Least privilege GitHub App permissions.
-- Redact secrets from logs (Actions masking + Rails log filtering).
-- Rate-limit webhook endpoint and API endpoints.
-- Audit trail for all user actions and run dispatches.
+### 6.4 Export Endpoints
+- `/tasks/:id/export.md`
+- `/tasks/:id/export.json`
+Controllers can fetch task and send file response.
+Protect by ownership.
 
 ---
 
-## 12. Performance & Reliability
-- Webhook processing via background jobs; HTTP responds quickly with 202.
-- Idempotency keys on webhook deliveries (GitHub delivery ID).
-- Retry with exponential backoff for GitHub API calls.
-- Job dead-letter queue + admin UI for reprocessing.
+## 7) Billing (Stripe)
+
+### 7.1 Checkout
+`RalphForge.Billing.Stripe.create_checkout_session(user, plan_code)`
+- creates Stripe Checkout session for subscription
+- uses env vars:
+  - STRIPE_API_KEY
+  - STRIPE_PRICE_* IDs
+- success/cancel URLs point back to app
+
+### 7.2 Webhook Handler
+Controller verifies signature using STRIPE_WEBHOOK_SECRET.
+On event:
+- enqueue StripeWebhookWorker (preferred) or process inline
+Handle:
+- checkout.session.completed → create/update customer + subscription
+- customer.subscription.updated/deleted → update subscription record
+- invoice.payment_failed → mark past_due
+
+### 7.3 Plan Mapping
+Plan resource holds tasks_per_month and price.
+Stripe price id mapping stored in env and mirrored into plan rows.
 
 ---
 
-## 13. Polyglot Module Detection & Contract Fan-out
-- `ralph.config.json` defines modules and commands.
-- `deps.contracts.json` defines contract files and affected modules.
-- `run_checks.sh`:
-  - identifies changed files
-  - maps to modules
-  - expands via contract fan-out
-  - runs checks only for impacted modules
+## 8) Admin (AshAdmin)
+Mount AshAdmin:
+- protect route with an admin-only plug
+- policies ensure only admin can read all resources
+Expose:
+- Users
+- Tasks
+- Subscriptions
+- UsageEvents
+- Templates
+Provide simple aggregates (counts by plan, tasks per day)
 
 ---
 
-## 14. Acceptance Criteria (System-Level)
-- A user can install GitHub App and select a repo.
-- The app can generate a plan and show tasks as cards.
-- “Build Next” triggers a GitHub Action run and creates a PR.
-- Runs and PR status appear correctly in UI with history.
-- Locked paths policy blocks disallowed modifications.
-- High-risk tasks require approval per policy.
-- Undo creates a revert PR reliably.
-- Ralph Loop updates plan deterministically and stays “one task per run.”
+## 9) Testing Strategy (TDD)
+
+### 9.1 Test Layers
+- Unit: policy checks, AI parsing, entitlement calculation
+- Resource tests: Ash actions (create/read/update), policies
+- LiveView tests: registration/login, task creation, progress UI, history
+- Billing tests: webhook signature verification, subscription sync (mock Stripe calls)
+
+### 9.2 Mocks
+- Claude: Mox behaviour
+- Stripe: Mox behaviour or use Stripe test events with verified signatures in integration tests
+
+### 9.3 Quality Gates
+CI must run:
+- `mix compile --warnings-as-errors`
+- `mix test`
+- `mix credo --strict`
+- `mix dialyzer`
 
 ---
 
-## 15. Implementation Notes (Suggested Rails Structure)
-- Controllers:
-  - `ProjectsController`
-  - `SpecsController`
-  - `PlansController` (generate)
-  - `TasksController`
-  - `RunsController` (dispatch + show)
-  - `SettingsController` (policies)
-  - `Webhooks::GithubController`
-- Jobs:
-  - `Github::HandleWebhookJob`
-  - `Github::DispatchWorkflowJob`
-  - `Plans::GeneratePlanJob`
-- Services:
-  - `Github::AppClient`
-  - `Github::RepoSync`
-  - `Runs::PolicyEvaluator`
-  - `Runs::SummaryBuilder`
+## 10) Ralph Loop (Internal Development Protocol)
+
+### 10.1 Repo State Files
+Create `.ralph/`:
+- `.ralph/ralph_state.json` (machine-readable)
+- `.ralph/ralph_log.md` (human-readable)
+- `.ralph/ralph_plan.md` (milestones, next tasks)
+
+### 10.2 Iteration Rules
+Each iteration:
+1) Read state
+2) Identify next failing test / next checklist item
+3) RED: write failing test
+4) GREEN: implement minimum
+5) REFACTOR: clean code
+6) Update state/log
+7) Commit if green
+
+Completion token is emitted only when all success criteria + quality gates pass.
 
 ---
 
-## 16. Repo Onboarding Template (Required Assets)
-Provide an “Enable Ralph” PR that adds:
-- `ralph/` folder with:
-  - prompts, specs, plan, agents
-  - loop scripts + check runner
-- `.github/workflows/ralph_plan.yml`
-- `.github/workflows/ralph_build.yml`
-- `.github/workflows/ralph_revert.yml` (optional)
+## 11) Project Structure (Canonical)
+Align your project to:
 
-This ensures “no hassle” setup for non-technical users.
+lib/ralph_forge/
+  accounts/
+  tasks/
+  templates/
+  billing/
+  ai/
+  audit/ (optional)
+lib/ralph_forge_web/
+  live/ (auth, tasks, billing, dashboard)
+  controllers/ (stripe webhook + exports)
+  components/
+
+This keeps the system maintainable and consistent with Ash DDD.
