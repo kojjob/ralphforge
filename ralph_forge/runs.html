@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ralph Runner — Runs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 p-4 hidden md:flex md:flex-col">
+      <div class="flex items-center gap-2 mb-6">
+        <div class="h-9 w-9 rounded-xl bg-indigo-600"></div>
+        <div>
+          <div class="font-semibold">Ralph Runner</div>
+          <div class="text-xs text-slate-500">PR-safe automation</div>
+        </div>
+      </div>
+
+      <nav class="space-y-1 text-sm">
+        <a class="block px-3 py-2 rounded-xl hover:bg-slate-100" href="projects.html">Projects</a>
+        <a class="block px-3 py-2 rounded-xl hover:bg-slate-100" href="tasks.html">Tasks</a>
+        <a class="block px-3 py-2 rounded-xl bg-slate-100 font-medium" href="runs.html">Runs</a>
+        <a class="block px-3 py-2 rounded-xl hover:bg-slate-100" href="settings.html">Settings</a>
+      </nav>
+
+      <div class="mt-auto pt-6">
+        <div class="p-3 rounded-2xl border border-slate-200 bg-white">
+          <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Tips</div>
+          <div class="text-xs text-slate-600 mt-2">If a run fails 3 times, Ralph pauses safely and asks for one decision.</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-4 md:p-8 space-y-6">
+      <header class="flex items-center justify-between">
+        <div>
+          <div class="text-sm text-slate-500">FlowAI</div>
+          <h1 class="text-2xl font-semibold">Runs</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <select class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200">
+            <option>All runs</option>
+            <option>Successful</option>
+            <option>Needs review</option>
+            <option>Failed</option>
+          </select>
+          <button class="text-sm px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Export</button>
+          <button class="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Start run</button>
+        </div>
+      </header>
+
+      <!-- Summary cards -->
+      <section class="grid md:grid-cols-4 gap-3">
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="text-xs text-slate-500">Last 7 days</div>
+          <div class="mt-1 text-xl font-semibold">14</div>
+          <div class="text-xs text-slate-500 mt-1">total runs</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="text-xs text-slate-500">Success</div>
+          <div class="mt-1 text-xl font-semibold text-emerald-700">11</div>
+          <div class="text-xs text-slate-500 mt-1">passed checks</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="text-xs text-slate-500">Needs review</div>
+          <div class="mt-1 text-xl font-semibold text-amber-700">2</div>
+          <div class="text-xs text-slate-500 mt-1">approval required</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="text-xs text-slate-500">Failed</div>
+          <div class="mt-1 text-xl font-semibold text-rose-700">1</div>
+          <div class="text-xs text-slate-500 mt-1">blocked</div>
+        </div>
+      </section>
+
+      <!-- Runs list -->
+      <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold">Recent runs</div>
+            <div class="text-xs text-slate-500">Click a run to see details, logs, and the PR.</div>
+          </div>
+          <input class="px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                 placeholder="Search runs…" />
+        </div>
+
+        <div class="divide-y divide-slate-200">
+          <!-- Row -->
+          <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <span class="mt-0.5 text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">✅ Success</span>
+              <div>
+                <div class="text-sm font-medium">Add login screen</div>
+                <div class="text-xs text-slate-500 mt-1">12 mins • 4 files changed • Tests passed</div>
+                <div class="text-xs text-slate-500 mt-1">Created PR: #128</div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">View PR</button>
+              <button class="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Details</button>
+            </div>
+          </div>
+
+          <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <span class="mt-0.5 text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">⚠️ Needs review</span>
+              <div>
+                <div class="text-sm font-medium">Update contracts/openapi.yaml</div>
+                <div class="text-xs text-slate-500 mt-1">18 mins • Fan-out: web + api + ios</div>
+                <div class="text-xs text-slate-500 mt-1">Approval required (High risk)</div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="text-sm px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Request approval</button>
+              <button class="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Details</button>
+            </div>
+          </div>
+
+          <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <span class="mt-0.5 text-xs px-2 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">❌ Failed</span>
+              <div>
+                <div class="text-sm font-medium">Go services test fix</div>
+                <div class="text-xs text-slate-500 mt-1">6 mins • Blocked: missing env vars</div>
+                <div class="text-xs text-slate-500 mt-1">Suggested: open Settings → Env</div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">View logs</button>
+              <button class="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Retry</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Run detail (static example) -->
+      <section class="grid lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Run detail</div>
+              <div class="mt-1 text-lg font-semibold">Add login screen</div>
+              <div class="text-sm text-slate-600 mt-1">✅ Success • 12 mins • PR #128</div>
+            </div>
+            <button class="text-sm px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Copy summary</button>
+          </div>
+
+          <div class="mt-5 grid sm:grid-cols-4 gap-2 text-xs">
+            <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-center">✅ Understand</div>
+            <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-center">✅ Change</div>
+            <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-center">✅ Prove</div>
+            <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-center">✅ PR</div>
+          </div>
+
+          <div class="mt-4 text-sm font-medium">Summary</div>
+          <p class="mt-2 text-sm text-slate-600">
+            Added iOS login screen, implemented /auth/login endpoint, and introduced 8 tests. Fast checks passed for ios + python_api.
+          </p>
+
+          <div class="mt-4 text-sm font-medium">Technical logs</div>
+          <pre class="mt-2 text-xs bg-slate-50 border border-slate-200 rounded-xl p-4 overflow-auto">
+• Updating iOS login UI…
+• Adding API endpoint…
+• Running checks…
+$ ralph/bin/run_checks.sh fast
+All checks passed.
+          </pre>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
+          <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Actions</div>
+          <div class="mt-3 space-y-2">
+            <button class="w-full text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Open PR</button>
+            <button class="w-full text-sm px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Re-run checks</button>
+            <button class="w-full text-sm px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Create revert PR</button>
+          </div>
+
+          <div class="mt-5 p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="text-xs text-slate-500">Budget</div>
+            <div class="text-sm font-medium mt-1">£2.40 used</div>
+            <div class="text-xs text-slate-500 mt-1">Daily cap: £25</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

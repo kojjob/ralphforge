@@ -10,7 +10,7 @@ import Config
 config :ralph_forge,
   ecto_repos: [RalphForge.Repo],
   generators: [timestamp_type: :utc_datetime],
-  ash_domains: [RalphForge.Accounts, RalphForge.Tasks]
+  ash_domains: [RalphForge.Accounts, RalphForge.Tasks, RalphForge.Templates]
 
 # Configure the endpoint
 config :ralph_forge, RalphForgeWeb.Endpoint,

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(frontend-design)",
+      "Bash(xargs ls:*)",
+      "Bash(wc:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(bin/rails test:*)",
+      "Bash(mix test:*)",
+      "Bash(mix compile:*)"
+    ]
+  }
+}

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ralph Runner — Settings</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 p-4 hidden md:flex md:flex-col">
+      <div class="flex items-center gap-2 mb-6">
+        <div class="h-9 w-9 rounded-xl bg-indigo-600"></div>
+        <div>
+          <div class="font-semibold">Ralph Runner</div>
+          <div class="text-xs text-slate-500">PR-safe automation</div>
+        </div>
+      </div>
+
+      <nav class="space-y-1 text-sm">
+        <a class="block px-3 py-2 rounded-xl hover:bg-slate-100" href="projects.html">Projects</a>
+        <a class="block px-3 py-2 rounded-xl hover:bg-slate-100" href="tasks.html">Tasks</a>
+        <a class="block px-3 py-2 rounded-xl hover:bg-slate-100" href="runs.html">Runs</a>
+        <a class="block px-3 py-2 rounded-xl bg-slate-100 font-medium" href="settings.html">Settings</a>
+      </nav>
+
+      <div class="mt-auto pt-6">
+        <div class="p-3 rounded-2xl border border-slate-200 bg-white">
+          <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Guardrails</div>
+          <div class="text-xs text-slate-600 mt-2">Keep these on for non-technical users: PR-only, approvals, locked paths.</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-4 md:p-8 space-y-6">
+      <header class="flex items-center justify-between">
+        <div>
+          <div class="text-sm text-slate-500">Workspace</div>
+          <h1 class="text-2xl font-semibold">Settings</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="text-sm px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Reset</button>
+          <button class="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Save changes</button>
+        </div>
+      </header>
+
+      <!-- Safety -->
+      <section class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5">
+        <div>
+          <h2 class="text-lg font-semibold">Safety</h2>
+          <p class="text-sm text-slate-600 mt-1">Defaults that keep everything calm and reversible.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm font-medium">PR-only mode</div>
+                <div class="text-xs text-slate-600 mt-1">Never pushes to main. Always opens a Pull Request.</div>
+              </div>
+              <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">ON</span>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm font-medium">Approval for high-risk</div>
+                <div class="text-xs text-slate-600 mt-1">Auth, billing, contracts need reviewer approval.</div>
+              </div>
+              <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">ON</span>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm font-medium">Stop if stuck</div>
+                <div class="text-xs text-slate-600 mt-1">Pause after repeated failures and ask one question.</div>
+              </div>
+              <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">ON</span>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm font-medium">Protected folders</div>
+                <div class="text-xs text-slate-600 mt-1">Block edits unless explicitly allowed.</div>
+              </div>
+              <button class="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">Manage</button>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span class="text-xs px-2 py-1 rounded-full bg-white border border-slate-200">billing/</span>
+              <span class="text-xs px-2 py-1 rounded-full bg-white border border-slate-200">contracts/</span>
+              <span class="text-xs px-2 py-1 rounded-full bg-white border border-slate-200">security/</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Budget -->
+      <section class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5">
+        <div>
+          <h2 class="text-lg font-semibold">Cost & speed</h2>
+          <p class="text-sm text-slate-600 mt-1">Prevent runaway loops and keep runs predictable.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="text-sm font-medium">Daily budget</div>
+            <div class="text-xs text-slate-600 mt-1">Stops runs after reaching this spend.</div>
+            <div class="mt-3 flex gap-2">
+              <button class="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">£10</button>
+              <button class="text-sm px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">£25</button>
+              <button class="text-sm px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50">£50</button>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="text-sm font-medium">Full checks frequency</div>
+            <div class="text-xs text-slate-600 mt-1">Run full suite every N iterations.</div>
+            <div class="mt-3">
+              <select class="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200">
+                <option>Every 5 runs (recommended)</option>
+                <option>Every 3 runs</option>
+                <option>Every run</option>
+                <option>Only when contracts change</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Engine -->
+      <section class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5">
+        <div>
+          <h2 class="text-lg font-semibold">AI engine</h2>
+          <p class="text-sm text-slate-600 mt-1">Choose the adapter and model. Keep advanced options hidden for normal users.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="text-sm font-medium">Adapter</div>
+            <div class="text-xs text-slate-600 mt-1">How Ralph runs your chosen AI tool.</div>
+            <select class="mt-3 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200">
+              <option>claude_code (recommended)</option>
+              <option>codex</option>
+              <option>opencode</option>
+              <option>custom</option>
+            </select>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="text-sm font-medium">Model</div>
+            <div class="text-xs text-slate-600 mt-1">Optional. Leave blank to use adapter defaults.</div>
+            <input class="mt-3 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                   placeholder="e.g. opus, sonnet, gpt-5…" />
+          </div>
+        </div>
+
+        <details class="p-4 rounded-2xl bg-white border border-slate-200">
+          <summary class="text-sm font-medium cursor-pointer">Advanced</summary>
+          <div class="mt-3 grid lg:grid-cols-2 gap-4">
+            <div>
+              <div class="text-sm font-medium">Custom adapter command</div>
+              <div class="text-xs text-slate-600 mt-1">Example: run your local CLI wrapper.</div>
+              <input class="mt-2 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                     placeholder="e.g. ./ralph/adapters/custom.sh" />
+            </div>
+            <div>
+              <div class="text-sm font-medium">Locked paths</div>
+              <div class="text-xs text-slate-600 mt-1">Comma-separated.</div>
+              <input class="mt-2 w-full px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                     placeholder="billing/, contracts/, security/" />
+            </div>
+          </div>
+        </details>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
